@@ -3,6 +3,7 @@ package GUI;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,6 +20,9 @@ public class SmartFrame extends JFrame {
 	public void addPainter(Drawable painter) {
 		painters.add(painter);
 	}
+	public void addAllPainters(Collection<? extends Drawable> c) {
+		painters.addAll(c);
+	}
 	public void paint(Graphics g) {
 		Dimension frameSize = this.getSize();
 		Dimension scale = new Dimension(frameSize.width/resolution.width, frameSize.height/resolution.height);
@@ -28,8 +32,9 @@ public class SmartFrame extends JFrame {
 		g.translate(0, 39);
 		for(Drawable painter:painters) {
 			painter.draw(g, scale);
+			g.translate(400, 0);
 		}
 		g.setColor(clr);
-		g.translate(0, -39);
+		g.translate(-100 * painters.size(), -39);
 	}
 }

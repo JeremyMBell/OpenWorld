@@ -3,6 +3,7 @@ package GUI;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.util.List;
 import java.awt.Toolkit;
 
 import javax.swing.JButton;
@@ -77,10 +78,10 @@ public class Game {
 				 {t,t,t,t,t,t,b,o,o,b,b,o,o,b,t,t,t,t,t,t},
 				 {t,t,t,t,t,t,t,b,o,o,o,o,b,t,t,t,t,t,t,t},
 				 {t,t,t,t,t,t,t,t,b,o,o,b,t,t,t,t,t,t,t,t},
-				 {t,t,t,t,t,t,t,t,t,b,b,t,t,t,t,t,t,t,t,t}
+				 {t,t,t,t,t,t,t,t,t,b,b,t,t,t,t,t,t,t,t,t},
 			};
-		Sprite foxy = new Sprite("Foxy", fox);
-		hi.container.addPainter(foxy);
+		hi.container.addAllPainters(Sprite.readSpritesFromFile("Sprites/Foxy.sprite"));
+		hi.container.repaint();
 	}
 
 }

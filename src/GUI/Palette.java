@@ -33,24 +33,35 @@ public class Palette implements Drawable {
 	@Override
 	public void draw(Graphics g, Dimension d) {
 		Set<Color> colors = clrRemap.keySet();
-		System.out.println(colors.size());
 		Color beforeColor = g.getColor();
 		int xR = d.width;
 		int yR = d.height;
 		for(Color color: colors) {
 			g.setColor(color);
-			System.out.println("Color:" + color);
 			for(Point p:this.clrRemap.get(color)) {
-				System.out.println(p);
 				g.fillRect(p.x*xR, p.y*yR, xR, yR);
 			}
 		}
-		System.out.println("Done");
 		g.setColor(beforeColor);
 	}
 	@Override
 	public Dimension getDimension() {
 		return this.size;
+	}
+	public Color[][] toBitmap() {
+		Color[][] bmp = new Color[size.height][size.width];
+		Color t = new Color(0,0,0,0);
+		for(Color clr:clrRemap.keySet()) {
+			for(Point p:clrRemap.get(clr)) {
+				bmp[p.y][p.x] = clr;
+			}
+		}
+		for(Color[] row:bmp) {
+			for(int i = 0; i < row.length && row[i] == null;i++) {
+				row[i] = t;
+			}
+		}
+		return bmp;
 	}
 
 }

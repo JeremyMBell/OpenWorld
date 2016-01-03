@@ -4,36 +4,75 @@ import java.util.List;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 
 public class Sprite implements Drawable {
 	private String name;
 	private Palette palette;
+	private static final Color TRANSPARENT = new Color(0,0,0,0);
 	public Sprite(String name, Color[][] colors) {
 		this.name = name;
 		this.palette = new Palette(colors);
 	}
-	
-	
+	/**
+	 * 
+	 * @return The sprite in a serialized form.
+	 */
+	public String toString() {
+		Dimension size = palette.getDimension();
+		String s = "";
+		for(Color[] row:palette.toBitmap()) {
+			boolean trans = true;
+			String rowString = "";
+			for (int i = row.length - 1; i >= 0; i--) {
+				String colorString = "";
+				if(trans && row[i].getAlpha() > 0) {
+					trans = false;
+				} else if (trans) {
+					continue;
+				}
+				if (row[i].getAlpha() > 0) {
+					colorString = row[i].getRed() + "x" + row[i].getGreen() + "x" + row[i].getBlue();
+				}
+				colorString += ",";
+				rowString = colorString + rowString;
+			}
+			s += rowString + "\t";
+		}
+		return this.name + "\n" + s;
+	}
+	public void toFile(String location) {
+		File dir = new File(location);
+		if(!dir.exists()){dir.mkdir();}
+		System.out.println(dir.getAbsolutePath());
+		File file = new File(dir.getAbsolutePath() + "/" + this.name + ".sprite");
+		FileWriter write;
+		try {
+			write = new FileWriter(file, false);
+			write.write(this.toString());
+			write.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Sorry, we failed to write \"" + this.name + "\" to location: " + location + ".sprite");
+		}
+	}
 	/**
 	 * @return Dimension that the sprite gives
 	 */
 	public Dimension getDimension() {
 		return this.palette.getDimension();
 	}
-	/**
-	 * @see Sprite#toString
-	 */
-	public String getName() {return this.name;}
+
 	/**
 	 * @return Name of the sprite.
 	 */
-	public String toString() {return this.name;}
+	public String getName() {return this.name;}
 	public static List<Sprite> readSpritesFromText(String text) {
 		String[] sprites = text.split("-\n");//Sprites separated by a line of "-"
 		List<Sprite> spriteList = new LinkedList<>();
@@ -45,35 +84,41 @@ public class Sprite implements Drawable {
 			String[] spriteAttributes = sprite.split("\n");
 			
 			//If no three lines, sprite isn't valid, move on.
-			if (spriteAttributes.length == 3) {
-				//e.g. 1024x768 is 1024 wide and 768 height
-				String[] dimensions = spriteAttributes[1].split("x");
+			if (spriteAttributes.length == 2) {
 				//Encoded RedxBluexGreen,RedxBluexGreen,...
-				String[] colors = spriteAttributes[2].split(",");
-				if (dimensions.length < 2) continue;//If a width and height not given, sprite isn't valid, move on
-				Dimension size;
-				try {//Reference dimension
-					size = new Dimension(Integer.parseInt(dimensions[0]), Integer.parseInt(dimensions[1]));
-				} catch(Exception e) {//If numbers weren't given in one of the dimensions, the sprite isn't valid
-					continue;
+				String[] rows = spriteAttributes[1].split("\t");
+				int largestSize = 0;
+				List<String[]> rowsList = new LinkedList<>();
+				for(int i = 0; i < rows.length; i++) {
+					String[] row = rows[i].split(",");
+					if (row.length > largestSize) {
+						largestSize = row.length;
+					}
+					rowsList.add(row);
 				}
-				//If less colors given than dimensions allotted for, move on.
-				if (colors.length < size.getHeight()*size.getWidth()) continue;
-				Color[][] sortedColors = new Color[(int) size.getHeight()][(int) size.getWidth()];
-				for(int i = 0; i < size.getHeight(); i++) {
-					for (int j = 0; j < size.getWidth(); j++) {
-						String[] color = colors[(int) size.getWidth() * i + j].split("x");//Color: RxBxG
+				Color[][] sortedColors = new Color[rows.length][largestSize];
+				for(int i = 0; i < sortedColors.length; i++) {
+					for (int j = 0; j < sortedColors[i].length; j++) {
+						String[] color = {};//Color: RxBxG
+						if(j < rowsList.get(i).length) {
+							color = rowsList.get(i)[j].split("x");
+						}
 						int[] rgb = new int[3];
 						boolean done = false;
 						switch(color.length) {//Handles null values
 							case 2://One blank value
 								rgb[2] = 0;
 								break;
-							case 1://Two blank values
-								rgb[2] = 0;
-								rgb[1] = 0;
+							case 1:
+								if (color[0].length()> 0) {//Two blank values
+									rgb[2] = 0;
+									rgb[1] = 0;
+								} else {//Transparent color
+									sortedColors[i][j] = new Color(0,0,0,0);
+									done = true;//Color established
+								}
 								break;
-							case 0://Transparent color
+							case 0://Assume transparent
 								sortedColors[i][j] = new Color(0,0,0,0);
 								done = true;//Color established
 								break;
@@ -92,6 +137,7 @@ public class Sprite implements Drawable {
 				spriteList.add(new Sprite(spriteAttributes[0], sortedColors));
 			}
 		}
+		System.out.println(spriteList.size());
 		return spriteList;
 	}
 	public static List<Sprite> readSpritesFromFile(String filename) {
